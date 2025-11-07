@@ -16,10 +16,10 @@
       "type": "text",
       "content": "Editable text",
       "position": {
-        "left": 86,
-        "top": 104,
-        "width": 243,
-        "height": 97
+        "left": 344,
+        "top": 287,
+        "width": 293,
+        "height": 40
       },
       "backgroundColor": "#ffffff",
       "textColor": "#1c2333",

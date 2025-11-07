@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveLayout: document.getElementById('save-layout'),
         canvas: document.getElementById('canvas'),
         canvasWrapper: document.querySelector('.canvas-wrapper'),
+        canvasPanel: document.querySelector('.canvas-panel'),
         inspectorEmpty: document.getElementById('inspector-empty'),
         inspectorForm: document.getElementById('inspector-form'),
         inspectorType: document.getElementById('inspector-type'),
@@ -70,17 +71,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ZOOM_CONFIG = {
         min: 0.5,
-        max: 2,
+        max: 5,
         step: 0.1,
     };
+
+    let pendingFitFrame = null;
 
     init();
 
     async function init() {
+        configureZoomControl();
         bindUIEvents();
+        window.addEventListener('resize', scheduleCanvasFit);
         setCanvasZoom(state.zoom);
         await loadProjects();
         await loadLayout(state.project);
+    }
+
+    function configureZoomControl() {
+        if (!els.canvasZoom) return;
+        els.canvasZoom.min = ZOOM_CONFIG.min;
+        els.canvasZoom.max = ZOOM_CONFIG.max;
+        els.canvasZoom.step = ZOOM_CONFIG.step;
+        els.canvasZoom.value = state.zoom;
     }
 
     function bindUIEvents() {
@@ -255,6 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
             els.agentResponse.textContent = 'Awaiting agent run…';
         }
         addAgentMessage({ role: 'system', text: 'Agent mode engaged. Share a brief and run the assistant.' });
+        scheduleCanvasFit();
     }
 
     function closeAgentConsole(force = false) {
@@ -269,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (els.agentResponse) {
             els.agentResponse.textContent = '';
         }
+        scheduleCanvasFit();
     }
 
     function toggleAgentPalette(enabled) {
@@ -998,6 +1013,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (els.zoomLabel) {
             els.zoomLabel.textContent = `${Math.round(state.zoom * 100)}%`;
         }
+        centerCanvasInViewport();
+    }
+
+    function scheduleCanvasFit() {
+        if (!state.layout) return;
+        if (pendingFitFrame) {
+            cancelAnimationFrame(pendingFitFrame);
+        }
+        pendingFitFrame = requestAnimationFrame(() => {
+            pendingFitFrame = null;
+            fitCanvasToPanel();
+        });
+    }
+
+    function fitCanvasToPanel() {
+        const dims = state.layout?.dimensions;
+        if (!dims || !dims.width || !dims.height) return;
+        const container = els.canvasPanel || els.canvasWrapper;
+        if (!container) return;
+        const styles = window.getComputedStyle(container);
+        const paddingX = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+        const availableWidth = Math.max(container.clientWidth - paddingX, 120);
+        if (!Number.isFinite(availableWidth) || availableWidth <= 0) return;
+        const widthZoom = availableWidth / dims.width;
+        const desiredZoom = widthZoom;
+        if (!Number.isFinite(desiredZoom) || desiredZoom <= 0) return;
+        const nextZoom = clampNumber(desiredZoom, ZOOM_CONFIG.min, ZOOM_CONFIG.max);
+        if (Math.abs(nextZoom - state.zoom) < 0.01) {
+            centerCanvasInViewport();
+            return;
+        }
+        setCanvasZoom(nextZoom);
     }
 
     function adjustCanvasZoom(delta) {
@@ -1059,10 +1106,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const dims = state.layout?.dimensions || CANVAS_PRESETS[state.format] || CANVAS_PRESETS.A4;
         document.documentElement.style.setProperty('--canvas-width', `${dims.width}px`);
         document.documentElement.style.setProperty('--canvas-height', `${dims.height}px`);
-        if (els.canvasWrapper) {
-            els.canvasWrapper.style.minWidth = `calc(${dims.width}px + 96px)`;
-            els.canvasWrapper.style.minHeight = `calc(${dims.height}px + 96px)`;
-        }
+        scheduleCanvasFit();
+        centerCanvasInViewport();
+    }
+
+    function centerCanvasInViewport() {
+        if (!els.canvasPanel || !els.canvasWrapper) return;
+        requestAnimationFrame(() => {
+            if (!els.canvasPanel || !els.canvasWrapper) return;
+            const panel = els.canvasPanel;
+            const targetLeft = Math.max(0, (panel.scrollWidth - panel.clientWidth) / 2);
+            const targetTop = Math.max(0, (panel.scrollHeight - panel.clientHeight) / 2);
+            if (Math.abs(panel.scrollLeft - targetLeft) > 1) {
+                panel.scrollLeft = targetLeft;
+            }
+            if (Math.abs(panel.scrollTop - targetTop) > 1) {
+                panel.scrollTop = targetTop;
+            }
+        });
     }
 
     function updateCanvasControls() {
