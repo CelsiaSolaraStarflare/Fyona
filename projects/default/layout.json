@@ -1,0 +1,39 @@
+{
+  "columns": 3,
+  "baseline": 24,
+  "gutter": 32,
+  "snap": true,
+  "zoom": 1,
+  "orientation": "portrait",
+  "format": "A4",
+  "dimensions": {
+    "height": 1123,
+    "width": 794
+  },
+  "blocks": [
+    {
+      "id": "block-b3d44745964b",
+      "type": "text",
+      "content": "Editable text",
+      "position": {
+        "left": 86,
+        "top": 104,
+        "width": 243,
+        "height": 97
+      },
+      "backgroundColor": "#ffffff",
+      "textColor": "#1c2333",
+      "borderRadius": 12,
+      "imageUrl": null
+    }
+  ],
+  "layers": [
+    {
+      "id": "layer-main",
+      "name": "Layer 1",
+      "order": 0
+    }
+  ],
+  "activeLayer": "layer-main",
+  "project": "default"
+}
