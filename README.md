@@ -1,4 +1,4 @@
-# Fiona Editorial Studio
+# Fyona Editorial Studio
 
 Fiona is a web-based editorial layout studio that allows users to create magazine-style layouts with AI assistance capabilities. Built with Flask (Python) on the backend and vanilla JavaScript on the frontend, Fiona provides a visual canvas for designing layouts with precise grid controls and an AI assistant powered by Qwen3-VL-Plus.
 
